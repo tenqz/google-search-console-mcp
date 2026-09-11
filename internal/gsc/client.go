@@ -83,13 +83,14 @@ func (c *Client) ListSites(ctx context.Context) ([]Site, error) {
 // QueryAnalytics runs a Search Analytics query and maps rows to domain types.
 func (c *Client) QueryAnalytics(ctx context.Context, query AnalyticsQuery) (AnalyticsResult, error) {
 	body := analyticsRequest{
-		StartDate:  query.StartDate,
-		EndDate:    query.EndDate,
-		Dimensions: query.Dimensions,
-		RowLimit:   query.RowLimit,
-		StartRow:   query.StartRow,
-		SearchType: query.SearchType,
-		DataState:  query.DataState,
+		StartDate:       query.StartDate,
+		EndDate:         query.EndDate,
+		Dimensions:      query.Dimensions,
+		RowLimit:        query.RowLimit,
+		StartRow:        query.StartRow,
+		SearchType:      query.SearchType,
+		DataState:       query.DataState,
+		AggregationType: query.AggregationType,
 	}
 	if len(query.Filters) > 0 {
 		filters := make([]apiDimensionFilter, 0, len(query.Filters))
@@ -104,7 +105,23 @@ func (c *Client) QueryAnalytics(ctx context.Context, query AnalyticsQuery) (Anal
 	if err := c.postJSON(ctx, endpoint, body, &payload); err != nil {
 		return AnalyticsResult{}, fmt.Errorf("query search analytics: %w", err)
 	}
-	return mapAnalyticsResult(payload), nil
+	result := mapAnalyticsResult(payload)
+	result.StartDate, result.EndDate, result.DataState = query.StartDate, query.EndDate, query.DataState
+	if result.DataState == "" {
+		result.DataState = "final"
+	}
+	result.Dimensions = append([]string{}, query.Dimensions...)
+	result.DataNotice = "Google returns top rows and does not guarantee a complete export. Finalized data can lag behind calendar dates."
+	limit := query.RowLimit
+	if limit == 0 {
+		limit = 1000
+	}
+	result.MayHaveMore = int64(len(result.Rows)) == limit
+	if result.MayHaveMore {
+		next := query.StartRow + int64(len(result.Rows))
+		result.NextStartRow = &next
+	}
+	return result, nil
 }
 
 // InspectURL inspects one page against a Search Console property.
@@ -138,8 +155,9 @@ type analyticsRequest struct {
 	Dimensions            []string                  `json:"dimensions,omitempty"`
 	RowLimit              int64                     `json:"rowLimit,omitempty"`
 	StartRow              int64                     `json:"startRow,omitempty"`
-	SearchType            string                    `json:"searchType,omitempty"`
+	SearchType            string                    `json:"type,omitempty"`
 	DataState             string                    `json:"dataState,omitempty"`
+	AggregationType       string                    `json:"aggregationType,omitempty"`
 	DimensionFilterGroups []apiDimensionFilterGroup `json:"dimensionFilterGroups,omitempty"`
 }
 
@@ -154,6 +172,7 @@ type apiDimensionFilter struct {
 }
 
 type analyticsResponse struct {
+	Metadata                *AnalyticsMetadata `json:"metadata,omitempty"`
 	Rows                    []analyticsRowJSON `json:"rows"`
 	ResponseAggregationType string             `json:"responseAggregationType"`
 }
@@ -214,6 +233,7 @@ func mapAnalyticsResult(resp analyticsResponse) AnalyticsResult {
 	}
 	return AnalyticsResult{
 		Rows:                    rows,
+		Metadata:                resp.Metadata,
 		RowCount:                len(rows),
 		ResponseAggregationType: resp.ResponseAggregationType,
 	}
