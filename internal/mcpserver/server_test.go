@@ -87,7 +87,7 @@ func TestQueryAnalyticsPassesValidatedQuery(t *testing.T) {
 	fake := &fakeConsole{result: gsc.AnalyticsResult{Rows: []gsc.AnalyticsRow{{Clicks: 3}}, RowCount: 1}}
 	tools := &mcpserver.Toolset{
 		Console: fake,
-		Now:     func() time.Time { return time.Date(2026, 9, 11, 0, 0, 0, 0, time.UTC) },
+		Now:     func() time.Time { return time.Date(2026, 9, 11, 15, 0, 0, 0, time.UTC) },
 	}
 
 	result, _, err := tools.QueryAnalytics(context.Background(), nil, mcpserver.QueryAnalyticsInput{
