@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -19,6 +21,24 @@ import (
 )
 
 func main() {
+	healthURL := flag.String("healthcheck", "", "Check an HTTP health URL and exit")
+	smokeURL := flag.String("smoke", "", "Verify all four MCP tools at a URL; requires MCP_AUTH_TOKEN and GOOGLE properties or demo mode")
+	flag.Parse()
+	if *healthURL != "" {
+		if err := checkHealth(*healthURL); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
+	if *smokeURL != "" {
+		if err := smoke(*smokeURL, os.Getenv("MCP_AUTH_TOKEN")); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
+
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 
 	cfg, err := config.Load()
