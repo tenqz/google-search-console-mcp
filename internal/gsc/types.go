@@ -53,6 +53,8 @@ type AnalyticsQuery struct {
 	SearchType string `json:"searchType,omitempty"`
 	// DataState selects FINAL or ALL (includes fresh/unfinalized data).
 	DataState string `json:"dataState,omitempty"`
+	// AggregationType controls property or page aggregation.
+	AggregationType string `json:"aggregationType,omitempty"`
 }
 
 // AnalyticsRow is one aggregated Search performance line.
@@ -69,8 +71,23 @@ type AnalyticsRow struct {
 	Position float64 `json:"position"`
 }
 
+// AnalyticsMetadata identifies where Google data is still incomplete (Pacific Time).
+type AnalyticsMetadata struct {
+	FirstIncompleteDate string `json:"firstIncompleteDate,omitempty"`
+	FirstIncompleteHour string `json:"firstIncompleteHour,omitempty"`
+}
+
 // AnalyticsResult is a Search Analytics response plus response metadata.
 type AnalyticsResult struct {
+	StartDate    string             `json:"startDate"`
+	EndDate      string             `json:"endDate"`
+	DataState    string             `json:"dataState"`
+	Dimensions   []string           `json:"dimensions"`
+	Metadata     *AnalyticsMetadata `json:"metadata,omitempty"`
+	MayHaveMore  bool               `json:"mayHaveMore"`
+	NextStartRow *int64             `json:"nextStartRow,omitempty"`
+	// DataNotice reminds agents that API results are not a complete export.
+	DataNotice string `json:"dataNotice"`
 	// Rows are the matching performance lines. Empty when there is no data.
 	Rows []AnalyticsRow `json:"rows"`
 	// RowCount is the number of rows returned.
