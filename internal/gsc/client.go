@@ -98,11 +98,7 @@ func (c *Client) QueryAnalytics(ctx context.Context, query AnalyticsQuery) (Anal
 	if len(query.Filters) > 0 {
 		filters := make([]apiDimensionFilter, 0, len(query.Filters))
 		for _, filter := range query.Filters {
-			filters = append(filters, apiDimensionFilter{
-				Dimension:  filter.Dimension,
-				Operator:   filter.Operator,
-				Expression: filter.Expression,
-			})
+			filters = append(filters, apiDimensionFilter(filter))
 		}
 		body.DimensionFilterGroups = []apiDimensionFilterGroup{{Filters: filters}}
 	}
@@ -118,11 +114,7 @@ func (c *Client) QueryAnalytics(ctx context.Context, query AnalyticsQuery) (Anal
 // InspectURL inspects one page against a Search Console property.
 func (c *Client) InspectURL(ctx context.Context, query InspectQuery) (InspectResult, error) {
 	var payload inspectResponse
-	if err := c.postJSON(ctx, c.inspectURL, inspectRequest{
-		SiteURL:       query.SiteURL,
-		InspectionURL: query.InspectionURL,
-		LanguageCode:  query.LanguageCode,
-	}, &payload); err != nil {
+	if err := c.postJSON(ctx, c.inspectURL, inspectRequest(query), &payload); err != nil {
 		return InspectResult{}, fmt.Errorf("inspect url: %w", err)
 	}
 	return mapInspectResult(payload), nil
@@ -139,16 +131,7 @@ func (c *Client) ListSitemaps(ctx context.Context, siteURL string) ([]Sitemap, e
 	}
 	out := make([]Sitemap, 0, len(payload.Sitemap))
 	for _, entry := range payload.Sitemap {
-		out = append(out, Sitemap{
-			Path:            entry.Path,
-			Type:            entry.Type,
-			LastSubmitted:   entry.LastSubmitted,
-			LastDownloaded:  entry.LastDownloaded,
-			IsPending:       entry.IsPending,
-			IsSitemapsIndex: entry.IsSitemapsIndex,
-			Errors:          entry.Errors,
-			Warnings:        entry.Warnings,
-		})
+		out = append(out, Sitemap(entry))
 	}
 	return out, nil
 }
@@ -231,13 +214,7 @@ type sitemapEntry struct {
 func mapAnalyticsResult(resp analyticsResponse) AnalyticsResult {
 	rows := make([]AnalyticsRow, 0, len(resp.Rows))
 	for _, row := range resp.Rows {
-		rows = append(rows, AnalyticsRow{
-			Keys:        row.Keys,
-			Clicks:      row.Clicks,
-			Impressions: row.Impressions,
-			CTR:         row.CTR,
-			Position:    row.Position,
-		})
+		rows = append(rows, AnalyticsRow(row))
 	}
 	return AnalyticsResult{
 		Rows:                    rows,
@@ -296,7 +273,7 @@ func (c *Client) doJSON(req *http.Request, dest any) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	raw, err := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
 	if err != nil {
 		return err
