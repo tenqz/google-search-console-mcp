@@ -1,4 +1,4 @@
-.PHONY: check fmt tidy vet build test lint
+.PHONY: check fmt tidy vet build test lint docker-test
 
 GOFLAGS ?= -mod=readonly
 export GOFLAGS
@@ -27,3 +27,7 @@ lint: $(LINT_BIN)
 
 $(LINT_BIN):
 	GOBIN=$(CURDIR)/.tools/$(LINT_VERSION) go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(LINT_VERSION)
+
+docker-test:
+	docker build -t gsc-mcp:test .
+	sh scripts/docker-smoke.sh gsc-mcp:test
