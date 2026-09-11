@@ -26,11 +26,11 @@ type Site struct {
 // DimensionFilter restricts analytics rows by a single dimension.
 type DimensionFilter struct {
 	// Dimension is the dimension name: query, page, country, device, searchAppearance.
-	Dimension string `json:"dimension"`
+	Dimension string `json:"dimension" jsonschema:"query, page, country, device or searchAppearance"`
 	// Operator is the comparison: equals, contains, notContains, includingRegex, excludingRegex.
-	Operator string `json:"operator"`
+	Operator string `json:"operator" jsonschema:"equals (default), notEquals, contains, notContains, includingRegex or excludingRegex"`
 	// Expression is the value compared against the dimension.
-	Expression string `json:"expression"`
+	Expression string `json:"expression" jsonschema:"Filter text or RE2 expression, at most 4096 bytes"`
 }
 
 // AnalyticsQuery is a Search Analytics request in domain terms.
