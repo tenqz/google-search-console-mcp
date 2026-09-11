@@ -1,0 +1,15 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+credentials/*.json
+bin/
+dist/
+coverage.out
+.cursor/
+vendor/
+.tools/
+credentials/
+.vscode/
+.idea/
