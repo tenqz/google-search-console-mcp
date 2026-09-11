@@ -27,12 +27,12 @@ type ListSitesInput struct{}
 type QueryAnalyticsInput struct {
 	// SiteURL is the property identifier from Search Console.
 	SiteURL string `json:"siteUrl" jsonschema:"Search Console property URL, e.g. https://example.com/ or sc-domain:example.com"`
-	// StartDate is inclusive YYYY-MM-DD. Defaults to 28 days before endDate.
-	StartDate string `json:"startDate,omitempty" jsonschema:"Inclusive start date YYYY-MM-DD"`
+	// StartDate is inclusive YYYY-MM-DD. Defaults to 27 days before endDate.
+	StartDate string `json:"startDate,omitempty" jsonschema:"Inclusive Pacific Time start YYYY-MM-DD; defaults to 27 days before endDate"`
 	// EndDate is inclusive YYYY-MM-DD. Defaults to yesterday.
-	EndDate string `json:"endDate,omitempty" jsonschema:"Inclusive end date YYYY-MM-DD"`
+	EndDate string `json:"endDate,omitempty" jsonschema:"Inclusive Pacific Time end YYYY-MM-DD; defaults to yesterday"`
 	// Dimensions groups rows: query, page, date, country, device, searchAppearance.
-	Dimensions []string `json:"dimensions,omitempty" jsonschema:"Dimensions to group by"`
+	Dimensions []string `json:"dimensions,omitempty" jsonschema:"Group by query, page, date, country, device, searchAppearance or hour; no duplicates"`
 	// Filters optional dimension filters applied together.
 	Filters []gsc.DimensionFilter `json:"filters,omitempty" jsonschema:"Dimension filters"`
 	// RowLimit maximum rows, 1-25000. Google default is 1000.
@@ -42,7 +42,8 @@ type QueryAnalyticsInput struct {
 	// SearchType WEB, IMAGE, VIDEO, NEWS, DISCOVER, or GOOGLE_NEWS.
 	SearchType string `json:"searchType,omitempty" jsonschema:"Search type: WEB, IMAGE, VIDEO, NEWS, DISCOVER, GOOGLE_NEWS"`
 	// DataState FINAL or ALL.
-	DataState string `json:"dataState,omitempty" jsonschema:"Data state: FINAL or ALL"`
+	DataState       string `json:"dataState,omitempty" jsonschema:"final, all, or hourly_all; hourly_all requires the hour dimension"`
+	AggregationType string `json:"aggregationType,omitempty" jsonschema:"auto, byPage, byProperty, or byNewsShowcasePanel"`
 }
 
 // InspectURLInput is the MCP argument object for inspect_url.
@@ -109,15 +110,16 @@ func (t *Toolset) ListSites(ctx context.Context, _ *mcp.CallToolRequest, _ ListS
 // QueryAnalytics returns Search performance rows for the given property and range.
 func (t *Toolset) QueryAnalytics(ctx context.Context, _ *mcp.CallToolRequest, in QueryAnalyticsInput) (*mcp.CallToolResult, any, error) {
 	query, err := gsc.ValidateAnalyticsQuery(gsc.AnalyticsQuery{
-		SiteURL:    in.SiteURL,
-		StartDate:  in.StartDate,
-		EndDate:    in.EndDate,
-		Dimensions: in.Dimensions,
-		Filters:    in.Filters,
-		RowLimit:   in.RowLimit,
-		StartRow:   in.StartRow,
-		SearchType: in.SearchType,
-		DataState:  in.DataState,
+		SiteURL:         in.SiteURL,
+		StartDate:       in.StartDate,
+		EndDate:         in.EndDate,
+		Dimensions:      in.Dimensions,
+		Filters:         in.Filters,
+		RowLimit:        in.RowLimit,
+		StartRow:        in.StartRow,
+		SearchType:      in.SearchType,
+		DataState:       in.DataState,
+		AggregationType: in.AggregationType,
 	}, t.Now())
 	if err != nil {
 		return toolError("%v", err)
