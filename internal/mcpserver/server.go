@@ -3,6 +3,7 @@ package mcpserver
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -102,7 +103,7 @@ type Toolset struct {
 func (t *Toolset) ListSites(ctx context.Context, _ *mcp.CallToolRequest, _ ListSitesInput) (*mcp.CallToolResult, any, error) {
 	sites, err := t.Console.ListSites(ctx)
 	if err != nil {
-		return toolError("list sites: %v", err)
+		return toolFailure(err)
 	}
 	return jsonResult(map[string]any{"sites": sites, "count": len(sites)})
 }
@@ -126,7 +127,7 @@ func (t *Toolset) QueryAnalytics(ctx context.Context, _ *mcp.CallToolRequest, in
 	}
 	result, err := t.Console.QueryAnalytics(ctx, query)
 	if err != nil {
-		return toolError("query analytics: %v", err)
+		return toolFailure(err)
 	}
 	return jsonResult(result)
 }
@@ -143,7 +144,7 @@ func (t *Toolset) InspectURL(ctx context.Context, _ *mcp.CallToolRequest, in Ins
 	}
 	result, err := t.Console.InspectURL(ctx, query)
 	if err != nil {
-		return toolError("inspect url: %v", err)
+		return toolFailure(err)
 	}
 	return jsonResult(result)
 }
@@ -156,7 +157,7 @@ func (t *Toolset) ListSitemaps(ctx context.Context, _ *mcp.CallToolRequest, in L
 	}
 	sitemaps, err := t.Console.ListSitemaps(ctx, siteURL)
 	if err != nil {
-		return toolError("list sitemaps: %v", err)
+		return toolFailure(err)
 	}
 	return jsonResult(map[string]any{"sitemaps": sitemaps, "count": len(sitemaps)})
 }
@@ -172,10 +173,25 @@ func jsonResult(value any) (*mcp.CallToolResult, any, error) {
 	}, value, nil
 }
 
-// toolError returns a non-panic tool failure the MCP client can display.
+// toolError classifies local argument errors separately from Google failures.
 func toolError(format string, args ...any) (*mcp.CallToolResult, any, error) {
-	return &mcp.CallToolResult{
-		IsError: true,
-		Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf(format, args...)}},
-	}, nil, nil
+	return toolFailure(fmt.Errorf(format, args...))
+}
+
+func toolFailure(err error) (*mcp.CallToolResult, any, error) {
+	payload := map[string]any{"code": "invalid_argument", "message": err.Error(), "retryable": false}
+	var failure *gsc.RequestError
+	if errors.As(err, &failure) {
+		payload["code"], payload["retryable"] = failure.Kind, failure.Retryable
+		if failure.Status != 0 {
+			payload["httpStatus"] = failure.Status
+		}
+		if failure.RetryAfterSeconds > 0 {
+			payload["retryAfterSeconds"] = failure.RetryAfterSeconds
+		}
+	}
+	wrapped := map[string]any{"error": payload}
+	raw, _ := json.Marshal(wrapped)
+	// An absent typed output lets execution errors bypass the success output schema.
+	return &mcp.CallToolResult{IsError: true, StructuredContent: wrapped, Content: []mcp.Content{&mcp.TextContent{Text: string(raw)}}}, nil, nil
 }
