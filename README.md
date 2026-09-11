@@ -98,3 +98,7 @@ Google responses are capped at 8 MiB. Reduce `rowLimit` if a response exceeds th
 Use Go 1.25+ with a current security patch; release containers use Go 1.26.6. Run `make check` for formatting, module consistency, vet, build, race tests and pinned lint. Run `make docker-test` for a container smoke check. See [testing](docs/testing.md), [architecture](docs/architecture.md), [contributing](CONTRIBUTING.md) and [security](SECURITY.md).
 
 The release workflow verifies a `v1.0.0` tag against the binary version, checks both container architectures and publishes versioned images to `ghcr.io/tenqz/google-search-console-mcp`. Images become available after the tag workflow succeeds. See [deployment](docs/deployment.md) for updates and rollback. Licensed under [MIT](LICENSE).
+
+## Contact
+
+Website: [opatsay.com](https://opatsay.com/)
