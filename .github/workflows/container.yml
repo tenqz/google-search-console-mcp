@@ -1,0 +1,24 @@
+name: Container
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          platforms: linux/${{ matrix.arch }}
+          tags: gsc-mcp:test
+      - run: sh scripts/docker-smoke.sh gsc-mcp:test linux/${{ matrix.arch }}
