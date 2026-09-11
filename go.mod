@@ -1,10 +1,10 @@
 module github.com/tenqz/google-search-console-mcp
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/modelcontextprotocol/go-sdk v1.4.0
-	golang.org/x/oauth2 v0.36.0
+	golang.org/x/oauth2 v0.37.0
 )
 
 require (
