@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -42,6 +43,8 @@ func main() {
 
 	handler := httpserver.New(cfg, mcpHandler)
 	httpServer := httpserver.NewServer(cfg.Addr, handler)
+	httpServer.WriteTimeout = cfg.RequestTimeout + 15*time.Second
+	httpServer.BaseContext = func(net.Listener) context.Context { return ctx }
 
 	go func() {
 		slog.Info("mcp server listening",
@@ -67,7 +70,7 @@ func main() {
 // newConsole builds the live Search Console client from configured credentials.
 func newConsole(ctx context.Context, cfg config.Config) (gsc.Console, error) {
 	if cfg.GoogleCredentialsJSON != "" {
-		return gsc.NewClientFromJSON(ctx, []byte(cfg.GoogleCredentialsJSON))
+		return gsc.NewClientFromJSON(ctx, []byte(cfg.GoogleCredentialsJSON), gsc.Options{RequestTimeout: cfg.RequestTimeout, MaxConcurrent: cfg.MaxConcurrent, MaxAttempts: cfg.MaxAttempts})
 	}
-	return gsc.NewClientFromFile(ctx, cfg.GoogleCredentialsFile)
+	return gsc.NewClientFromFile(ctx, cfg.GoogleCredentialsFile, gsc.Options{RequestTimeout: cfg.RequestTimeout, MaxConcurrent: cfg.MaxConcurrent, MaxAttempts: cfg.MaxAttempts})
 }
