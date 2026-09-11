@@ -14,6 +14,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/tenqz/google-search-console-mcp/internal/buildinfo"
 	"github.com/tenqz/google-search-console-mcp/internal/config"
 	"github.com/tenqz/google-search-console-mcp/internal/gsc"
 	"github.com/tenqz/google-search-console-mcp/internal/httpserver"
@@ -21,9 +22,14 @@ import (
 )
 
 func main() {
+	version := flag.Bool("version", false, "Print version and exit")
 	healthURL := flag.String("healthcheck", "", "Check an HTTP health URL and exit")
 	smokeURL := flag.String("smoke", "", "Verify all four MCP tools at a URL; requires MCP_AUTH_TOKEN and GOOGLE properties or demo mode")
 	flag.Parse()
+	if *version {
+		fmt.Println(buildinfo.Version)
+		return
+	}
 	if *healthURL != "" {
 		if err := checkHealth(*healthURL); err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -72,6 +78,7 @@ func main() {
 			"mcpPath", cfg.MCPPath,
 			"insecure", cfg.AllowInsecure,
 			"demo", cfg.Demo,
+			"version", mcpserver.ServerVersion,
 		)
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("http server", "err", err)
