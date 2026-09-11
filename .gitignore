@@ -1,0 +1,19 @@
+# Local secrets
+.env
+credentials/*.json
+
+# Go
+/bin/
+/dist/
+coverage.out
+vendor/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+.cursor/
+
+# Pinned local development tools
+.tools/
