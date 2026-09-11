@@ -12,6 +12,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
+	"github.com/tenqz/google-search-console-mcp/internal/buildinfo"
 	"github.com/tenqz/google-search-console-mcp/internal/gsc"
 )
 
@@ -19,7 +20,7 @@ const (
 	// ServerName is the MCP implementation name advertised to agents.
 	ServerName = "google-search-console"
 	// ServerVersion is the semantic version of this MCP server.
-	ServerVersion = "0.1.0"
+	ServerVersion = buildinfo.Version
 )
 
 // ListSitesInput is the MCP argument object for list_sites.
