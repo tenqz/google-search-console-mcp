@@ -131,7 +131,9 @@ func TestEndToEnd(t *testing.T) {
 		t.Fatalf("catalog=%d", len(catalog.Tools))
 	}
 	for _, tool := range catalog.Tools {
-		t.Logf("catalog %s outputSchema=%t annotations=%t", tool.Name, tool.OutputSchema != nil, tool.Annotations != nil)
+		if tool.OutputSchema == nil || tool.Annotations == nil || !tool.Annotations.ReadOnlyHint {
+			t.Fatalf("missing public contract for %s", tool.Name)
+		}
 	}
 
 	cases := []struct {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/google/jsonschema-go/jsonschema"
 	"strings"
 	"time"
 
@@ -71,21 +72,31 @@ func New(console gsc.Console) *mcp.Server {
 	}, nil)
 
 	tools := &Toolset{Console: console, Now: time.Now}
+	destructive := false
+	annotations := &mcp.ToolAnnotations{ReadOnlyHint: true, IdempotentHint: true, DestructiveHint: &destructive}
 	mcp.AddTool(server, &mcp.Tool{
-		Name:        "list_sites",
-		Description: "List Google Search Console properties the service account can access, including permission level.",
+		Name:         "list_sites",
+		OutputSchema: schemaFor[SitesOutput](),
+		Annotations:  annotations,
+		Description:  "List Google Search Console properties the service account can access, including permission level.",
 	}, tools.ListSites)
 	mcp.AddTool(server, &mcp.Tool{
-		Name:        "query_analytics",
-		Description: "Query Google Search performance (clicks, impressions, CTR, position) for a Search Console property. Use list_sites first if siteUrl is unknown.",
+		Name:         "query_analytics",
+		OutputSchema: schemaFor[gsc.AnalyticsResult](),
+		Annotations:  annotations,
+		Description:  "Query Google Search performance (clicks, impressions, CTR, position) for a Search Console property. Use list_sites first if siteUrl is unknown.",
 	}, tools.QueryAnalytics)
 	mcp.AddTool(server, &mcp.Tool{
-		Name:        "inspect_url",
-		Description: "Inspect how Google indexes a URL for a Search Console property (coverage, fetch, robots, canonicals).",
+		Name:         "inspect_url",
+		OutputSchema: schemaFor[gsc.InspectResult](),
+		Annotations:  annotations,
+		Description:  "Inspect how Google indexes a URL for a Search Console property (coverage, fetch, robots, canonicals).",
 	}, tools.InspectURL)
 	mcp.AddTool(server, &mcp.Tool{
-		Name:        "list_sitemaps",
-		Description: "List sitemaps known to Google Search Console for a property.",
+		Name:         "list_sitemaps",
+		OutputSchema: schemaFor[SitemapsOutput](),
+		Annotations:  annotations,
+		Description:  "List sitemaps known to Google Search Console for a property.",
 	}, tools.ListSitemaps)
 
 	return server
@@ -105,7 +116,7 @@ func (t *Toolset) ListSites(ctx context.Context, _ *mcp.CallToolRequest, _ ListS
 	if err != nil {
 		return toolFailure(err)
 	}
-	return jsonResult(map[string]any{"sites": sites, "count": len(sites)})
+	return jsonResult(SitesOutput{Sites: sites, Count: len(sites)})
 }
 
 // QueryAnalytics returns Search performance rows for the given property and range.
@@ -159,7 +170,7 @@ func (t *Toolset) ListSitemaps(ctx context.Context, _ *mcp.CallToolRequest, in L
 	if err != nil {
 		return toolFailure(err)
 	}
-	return jsonResult(map[string]any{"sitemaps": sitemaps, "count": len(sitemaps)})
+	return jsonResult(SitemapsOutput{Sitemaps: sitemaps, Count: len(sitemaps)})
 }
 
 // jsonResult encodes value as JSON text content for the MCP client.
@@ -171,6 +182,26 @@ func jsonResult(value any) (*mcp.CallToolResult, any, error) {
 	return &mcp.CallToolResult{
 		Content: []mcp.Content{&mcp.TextContent{Text: string(body)}},
 	}, value, nil
+}
+
+// SitesOutput is the stable result of list_sites.
+type SitesOutput struct {
+	Sites []gsc.Site `json:"sites"`
+	Count int        `json:"count"`
+}
+
+// SitemapsOutput is the stable result of list_sitemaps.
+type SitemapsOutput struct {
+	Sitemaps []gsc.Sitemap `json:"sitemaps"`
+	Count    int           `json:"count"`
+}
+
+func schemaFor[T any]() *jsonschema.Schema {
+	schema, err := jsonschema.For[T](nil)
+	if err != nil {
+		panic(fmt.Errorf("MCP output schema: %w", err))
+	}
+	return schema
 }
 
 // toolError classifies local argument errors separately from Google failures.
