@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/jsonschema-go/jsonschema"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -83,25 +84,25 @@ func New(console gsc.Console) *mcp.Server {
 		OutputSchema: schemaFor[SitesOutput](),
 		Annotations:  annotations,
 		Description:  "List Google Search Console properties the service account can access, including permission level.",
-	}, tools.ListSites)
+	}, observe("list_sites", tools.ListSites))
 	mcp.AddTool(server, &mcp.Tool{
 		Name:         "query_analytics",
 		OutputSchema: schemaFor[gsc.AnalyticsResult](),
 		Annotations:  annotations,
 		Description:  "Query Google Search performance (clicks, impressions, CTR, position) for a Search Console property. Use list_sites first if siteUrl is unknown.",
-	}, tools.QueryAnalytics)
+	}, observe("query_analytics", tools.QueryAnalytics))
 	mcp.AddTool(server, &mcp.Tool{
 		Name:         "inspect_url",
 		OutputSchema: schemaFor[gsc.InspectResult](),
 		Annotations:  annotations,
 		Description:  "Inspect how Google indexes a URL for a Search Console property (coverage, fetch, robots, canonicals).",
-	}, tools.InspectURL)
+	}, observe("inspect_url", tools.InspectURL))
 	mcp.AddTool(server, &mcp.Tool{
 		Name:         "list_sitemaps",
 		OutputSchema: schemaFor[SitemapsOutput](),
 		Annotations:  annotations,
 		Description:  "List sitemaps known to Google Search Console for a property.",
-	}, tools.ListSitemaps)
+	}, observe("list_sitemaps", tools.ListSitemaps))
 
 	return server
 }
@@ -229,4 +230,15 @@ func toolFailure(err error) (*mcp.CallToolResult, any, error) {
 	raw, _ := json.Marshal(wrapped)
 	// An absent typed output lets execution errors bypass the success output schema.
 	return &mcp.CallToolResult{IsError: true, StructuredContent: wrapped, Content: []mcp.Content{&mcp.TextContent{Text: string(raw)}}}, nil, nil
+}
+
+// observe records operation names and durations, never arguments, tokens or tool output.
+func observe[In, Out any](name string, next mcp.ToolHandlerFor[In, Out]) mcp.ToolHandlerFor[In, Out] {
+	return func(ctx context.Context, req *mcp.CallToolRequest, in In) (*mcp.CallToolResult, Out, error) {
+		start := time.Now()
+		result, out, err := next(ctx, req, in)
+		failed := err != nil || (result != nil && result.IsError)
+		slog.Info("mcp_tool", "tool", name, "failed", failed, "duration_ms", time.Since(start).Milliseconds())
+		return result, out, err
+	}
 }
