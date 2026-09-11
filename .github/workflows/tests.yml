@@ -1,0 +1,25 @@
+name: Tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go: ["1.25.x", "1.26.x"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go }}
+      - run: make fmt tidy vet build test
+        env:
+          # Fail when a dependency exceeds the selected Go version; do not auto-upgrade.
+          GOTOOLCHAIN: local
