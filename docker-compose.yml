@@ -1,0 +1,21 @@
+services:
+  mcp:
+    image: ghcr.io/tenqz/google-search-console-mcp:${MCP_VERSION:-1.0.0}
+    build:
+      context: .
+      target: runtime
+    user: "${LOCAL_UID:-65532}:${LOCAL_GID:-65532}"
+    ports:
+      - "127.0.0.1:${HTTP_PORT:-8080}:8080"
+    env_file: .env
+    environment:
+      HTTP_ADDR: ":8080"
+      GOOGLE_APPLICATION_CREDENTIALS: /credentials/service-account.json
+    volumes:
+      - ./credentials:/credentials:ro
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    mem_limit: 256m
+    restart: unless-stopped
