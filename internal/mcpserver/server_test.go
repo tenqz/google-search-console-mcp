@@ -9,8 +9,8 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/tenqz/search-console/internal/gsc"
-	"github.com/tenqz/search-console/internal/mcpserver"
+	"github.com/tenqz/google-search-console-mcp/internal/gsc"
+	"github.com/tenqz/google-search-console-mcp/internal/mcpserver"
 )
 
 // fakeConsole is an in-memory Search Console used by tool tests.

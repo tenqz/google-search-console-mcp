@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/tenqz/search-console/internal/auth"
-	"github.com/tenqz/search-console/internal/config"
+	"github.com/tenqz/google-search-console-mcp/internal/auth"
+	"github.com/tenqz/google-search-console-mcp/internal/config"
 )
 
 // New constructs the public HTTP mux: health is open, MCP is optionally authed.

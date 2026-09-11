@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tenqz/search-console/internal/gsc"
+	"github.com/tenqz/google-search-console-mcp/internal/gsc"
 )
 
 // TestValidateAnalyticsQueryRequiresSiteURL documents that a property identifier is mandatory.

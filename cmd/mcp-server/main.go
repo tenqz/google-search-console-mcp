@@ -11,10 +11,10 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/tenqz/search-console/internal/config"
-	"github.com/tenqz/search-console/internal/gsc"
-	"github.com/tenqz/search-console/internal/httpserver"
-	"github.com/tenqz/search-console/internal/mcpserver"
+	"github.com/tenqz/google-search-console-mcp/internal/config"
+	"github.com/tenqz/google-search-console-mcp/internal/gsc"
+	"github.com/tenqz/google-search-console-mcp/internal/httpserver"
+	"github.com/tenqz/google-search-console-mcp/internal/mcpserver"
 )
 
 func main() {

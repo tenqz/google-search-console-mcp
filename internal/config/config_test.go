@@ -3,7 +3,7 @@ package config_test
 import (
 	"testing"
 
-	"github.com/tenqz/search-console/internal/config"
+	"github.com/tenqz/google-search-console-mcp/internal/config"
 )
 
 // TestLoadRequiresAuthToken documents that a public MCP endpoint must not start without a shared secret.

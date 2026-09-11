@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/tenqz/search-console/internal/auth"
+	"github.com/tenqz/google-search-console-mcp/internal/auth"
 )
 
 // TestBearerRejectsMissingToken documents that anonymous MCP calls are denied.

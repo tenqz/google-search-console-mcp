@@ -8,8 +8,8 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 
-	"github.com/tenqz/search-console/internal/gsc"
-	"github.com/tenqz/search-console/internal/mcpserver"
+	"github.com/tenqz/google-search-console-mcp/internal/gsc"
+	"github.com/tenqz/google-search-console-mcp/internal/mcpserver"
 )
 
 // TestStreamableHTTPExposesCatalog documents that a remote agent can list the MVP tools over HTTP.

@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/tenqz/search-console/internal/config"
-	"github.com/tenqz/search-console/internal/httpserver"
+	"github.com/tenqz/google-search-console-mcp/internal/config"
+	"github.com/tenqz/google-search-console-mcp/internal/httpserver"
 )
 
 // TestHealthIsPublic documents that Docker healthchecks do not need a bearer token.

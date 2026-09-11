@@ -4,9 +4,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/tenqz/search-console/actions/workflows/tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/tenqz/search-console/tests.yml?branch=main&label=tests" alt="Tests"></a>
+  <a href="https://github.com/tenqz/google-search-console-mcp/actions/workflows/tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/tenqz/google-search-console-mcp/tests.yml?branch=main&label=tests" alt="Tests"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
-  <a href="https://pkg.go.dev/github.com/tenqz/search-console"><img src="https://pkg.go.dev/badge/github.com/tenqz/search-console.svg" alt="Go Reference"></a>
+  <a href="https://pkg.go.dev/github.com/tenqz/google-search-console-mcp"><img src="https://pkg.go.dev/badge/github.com/tenqz/google-search-console-mcp.svg" alt="Go Reference"></a>
 </p>
 
 ## About
@@ -35,8 +35,8 @@ Remote [Model Context Protocol](https://modelcontextprotocol.io/) server that ex
 ## Installation
 
 ```bash
-git clone https://github.com/tenqz/search-console.git
-cd search-console
+git clone https://github.com/tenqz/google-search-console-mcp.git
+cd google-search-console-mcp
 ```
 
 ## Quick Start
@@ -116,4 +116,4 @@ MIT License. See [LICENSE](LICENSE).
 
 **Author:** Oleg Patsay  
 **Email:** smmartbiz@gmail.com  
-**GitHub:** [tenqz/search-console](https://github.com/tenqz/search-console)
+**GitHub:** [tenqz/google-search-console-mcp](https://github.com/tenqz/google-search-console-mcp)
