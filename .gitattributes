@@ -1,0 +1,13 @@
+* text=auto eol=lf
+
+/tests export-ignore
+/.github export-ignore
+/.gitignore export-ignore
+/.gitattributes export-ignore
+/.editorconfig export-ignore
+/.golangci.yml export-ignore
+/CONTRIBUTING.md export-ignore
+/CHANGELOG.md export-ignore
+/docs export-ignore
+/Dockerfile export-ignore
+/docker-compose.yml export-ignore
