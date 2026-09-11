@@ -78,3 +78,18 @@ func TestLoadRejectsMCPPathWithoutSlash(t *testing.T) {
 		t.Fatal("expected an error for MCP_PATH without a leading slash")
 	}
 }
+
+// TestLoadRejectsUnsafeAndInvalidSettings protects public binds, route patterns and resource budgets.
+func TestLoadRejectsUnsafeAndInvalidSettings(t *testing.T) {
+	for _, tc := range []struct{ name, value string }{{"HTTP_ADDR", ":8080"}, {"MCP_PATH", "/health"}, {"MCP_PATH", "/{wildcard}"}, {"GOOGLE_REQUEST_TIMEOUT", "0s"}, {"GOOGLE_MAX_CONCURRENT", "0"}, {"GOOGLE_MAX_ATTEMPTS", "20"}, {"MCP_MAX_BODY_BYTES", "0"}} {
+		t.Run(tc.name+tc.value, func(t *testing.T) {
+			t.Setenv("MCP_AUTH_TOKEN", "")
+			t.Setenv("MCP_ALLOW_INSECURE", "true")
+			t.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "/tmp/test.json")
+			t.Setenv(tc.name, tc.value)
+			if _, err := config.Load(); err == nil {
+				t.Fatal("unsafe settings accepted")
+			}
+		})
+	}
+}
