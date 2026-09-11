@@ -66,10 +66,14 @@ type ListSitemapsInput struct {
 
 // New builds an MCP server with Search Console tools registered.
 func New(console gsc.Console) *mcp.Server {
+	instructions := "Read-only Google Search Console access. Call list_sites first. Analytics returns top rows, not a complete export; inspect date ranges and freshness metadata before interpreting changes."
+	if demo, ok := console.(interface{ DemoMode() bool }); ok && demo.DemoMode() {
+		instructions = "DEMO MODE: all results are deterministic fixtures for example.invalid, not Google data."
+	}
 	server := mcp.NewServer(&mcp.Implementation{
 		Name:    ServerName,
 		Version: ServerVersion,
-	}, nil)
+	}, &mcp.ServerOptions{Instructions: instructions})
 
 	tools := &Toolset{Console: console, Now: time.Now}
 	destructive := false
