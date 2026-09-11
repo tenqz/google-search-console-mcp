@@ -3,6 +3,7 @@ package httpserver_test
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/tenqz/google-search-console-mcp/internal/config"
@@ -49,4 +50,23 @@ func okHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+}
+
+// TestMCPBodyAndOriginLimits verifies both chunked bodies and authentication ordering.
+func TestMCPBodyAndOriginLimits(t *testing.T) {
+	handler := httpserver.New(config.Config{MCPPath: "/mcp", AuthToken: "secret", MaxBodyBytes: 8}, okHandler())
+	for _, tc := range []struct {
+		body, auth, origin string
+		want               int
+	}{{"123456789", "Bearer secret", "", 413}, {"123456789", "", "", 401}, {"{}", "bearer secret", "", 200}, {"{}", "Bearer secret", "https://evil.example", 403}, {"{}", "Bearer secret", "http://example.com", 200}} {
+		req := httptest.NewRequest(http.MethodPost, "http://example.com/mcp", strings.NewReader(tc.body))
+		req.ContentLength = -1
+		req.Header.Set("Authorization", tc.auth)
+		req.Header.Set("Origin", tc.origin)
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, req)
+		if rec.Code != tc.want {
+			t.Fatalf("%+v: status %d", tc, rec.Code)
+		}
+	}
 }
