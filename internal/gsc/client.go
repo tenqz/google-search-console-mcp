@@ -1,17 +1,11 @@
 package gsc
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"os"
-	"strings"
-
-	"golang.org/x/oauth2/jwt"
 )
 
 const (
@@ -42,28 +36,30 @@ type Client struct {
 	http          *http.Client
 	webmasterBase string
 	inspectURL    string
+	options       Options
+	slots         chan struct{}
 }
 
 // NewClientFromJSON builds a Client from a service-account JSON key.
-func NewClientFromJSON(ctx context.Context, credentialsJSON []byte) (*Client, error) {
-	httpClient, err := httpClientFromJSON(ctx, credentialsJSON)
+func NewClientFromJSON(ctx context.Context, credentialsJSON []byte, options ...Options) (*Client, error) {
+	opts := Options{}.defaults()
+	if len(options) > 0 {
+		opts = options[0].defaults()
+	}
+	httpClient, err := httpClientFromJSON(ctx, credentialsJSON, opts.RequestTimeout)
 	if err != nil {
 		return nil, err
 	}
-	return &Client{
-		http:          httpClient,
-		webmasterBase: defaultWebmasterBase,
-		inspectURL:    defaultInspectURL,
-	}, nil
+	return NewClient(httpClient, opts), nil
 }
 
 // NewClientFromFile builds a Client from a service-account JSON file path.
-func NewClientFromFile(ctx context.Context, credentialsFile string) (*Client, error) {
+func NewClientFromFile(ctx context.Context, credentialsFile string, options ...Options) (*Client, error) {
 	raw, err := os.ReadFile(credentialsFile)
 	if err != nil {
 		return nil, fmt.Errorf("read google credentials: %w", err)
 	}
-	return NewClientFromJSON(ctx, raw)
+	return NewClientFromJSON(ctx, raw, options...)
 }
 
 // ListSites returns properties visible to the service account.
@@ -245,66 +241,4 @@ func mapInspectResult(resp inspectResponse) InspectResult {
 		out.MobileUsabilityVerdict = mobile.Verdict
 	}
 	return out
-}
-
-func (c *Client) getJSON(ctx context.Context, endpoint string, dest any) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
-	if err != nil {
-		return err
-	}
-	return c.doJSON(req, dest)
-}
-
-func (c *Client) postJSON(ctx context.Context, endpoint string, body any, dest any) error {
-	raw, err := json.Marshal(body)
-	if err != nil {
-		return err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(raw))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	return c.doJSON(req, dest)
-}
-
-func (c *Client) doJSON(req *http.Request, dest any) error {
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return err
-	}
-	defer func() { _ = resp.Body.Close() }()
-	raw, err := io.ReadAll(io.LimitReader(resp.Body, 8<<20))
-	if err != nil {
-		return err
-	}
-	if resp.StatusCode >= 300 {
-		return fmt.Errorf("google api %s: %s", resp.Status, strings.TrimSpace(string(raw)))
-	}
-	if dest == nil {
-		return nil
-	}
-	return json.Unmarshal(raw, dest)
-}
-
-func httpClientFromJSON(ctx context.Context, credentialsJSON []byte) (*http.Client, error) {
-	var sa serviceAccountFile
-	if err := json.Unmarshal(credentialsJSON, &sa); err != nil {
-		return nil, fmt.Errorf("parse google credentials: %w", err)
-	}
-	if sa.ClientEmail == "" || sa.PrivateKey == "" {
-		return nil, fmt.Errorf("google credentials must include client_email and private_key")
-	}
-	tokenURL := sa.TokenURI
-	if tokenURL == "" {
-		tokenURL = defaultTokenURL
-	}
-	cfg := &jwt.Config{
-		Email:        sa.ClientEmail,
-		PrivateKey:   []byte(sa.PrivateKey),
-		PrivateKeyID: sa.PrivateKeyID,
-		Scopes:       []string{webmasterScope},
-		TokenURL:     tokenURL,
-	}
-	return cfg.Client(ctx), nil
 }
