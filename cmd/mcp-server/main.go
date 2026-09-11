@@ -51,6 +51,7 @@ func main() {
 			"addr", cfg.Addr,
 			"mcpPath", cfg.MCPPath,
 			"insecure", cfg.AllowInsecure,
+			"demo", cfg.Demo,
 		)
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("http server", "err", err)
@@ -69,6 +70,9 @@ func main() {
 
 // newConsole builds the live Search Console client from configured credentials.
 func newConsole(ctx context.Context, cfg config.Config) (gsc.Console, error) {
+	if cfg.Demo {
+		return gsc.NewDemo(), nil
+	}
 	if cfg.GoogleCredentialsJSON != "" {
 		return gsc.NewClientFromJSON(ctx, []byte(cfg.GoogleCredentialsJSON), gsc.Options{RequestTimeout: cfg.RequestTimeout, MaxConcurrent: cfg.MaxConcurrent, MaxAttempts: cfg.MaxAttempts})
 	}
