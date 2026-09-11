@@ -13,6 +13,7 @@ import (
 // Config holds process-wide settings loaded from the environment.
 // It is the only place that reads OS environment variables.
 type Config struct {
+	Demo           bool
 	RequestTimeout time.Duration
 	MaxConcurrent  int
 	MaxAttempts    int
@@ -35,6 +36,7 @@ type Config struct {
 // It returns an error when a production-unsafe combination is detected.
 func Load() (Config, error) {
 	cfg := Config{
+		Demo:          truthy(os.Getenv("MCP_DEMO")),
 		Addr:          envOr("HTTP_ADDR", ":8080"),
 		MCPPath:       envOr("MCP_PATH", "/mcp"),
 		AuthToken:     os.Getenv("MCP_AUTH_TOKEN"),
@@ -85,10 +87,13 @@ func Load() (Config, error) {
 	if !cfg.AllowInsecure && (strings.TrimSpace(cfg.AuthToken) == "" || cfg.AuthToken == "replace-me-with-a-long-random-token") {
 		return Config{}, fmt.Errorf("MCP_AUTH_TOKEN is required unless MCP_ALLOW_INSECURE=true")
 	}
-	if cfg.GoogleCredentialsFile == "" && cfg.GoogleCredentialsJSON == "" {
+	if !cfg.Demo && cfg.GoogleCredentialsFile == "" && cfg.GoogleCredentialsJSON == "" {
 		return Config{}, fmt.Errorf("set GOOGLE_APPLICATION_CREDENTIALS or GOOGLE_CREDENTIALS_JSON")
 	}
 
+	if cfg.Demo && (cfg.GoogleCredentialsFile != "" || cfg.GoogleCredentialsJSON != "") {
+		return Config{}, fmt.Errorf("MCP_DEMO must not be combined with Google credentials")
+	}
 	return cfg, nil
 }
 

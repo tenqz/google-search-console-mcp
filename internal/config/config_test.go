@@ -93,3 +93,20 @@ func TestLoadRejectsUnsafeAndInvalidSettings(t *testing.T) {
 		})
 	}
 }
+
+// TestDemoConfiguration prevents accidentally displaying fixtures as a configured real account.
+func TestDemoConfiguration(t *testing.T) {
+	t.Setenv("MCP_DEMO", "true")
+	t.Setenv("MCP_AUTH_TOKEN", "test")
+	t.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "")
+	t.Setenv("GOOGLE_CREDENTIALS_JSON", "")
+	t.Setenv("GOOGLE_CREDENTIALS_FILE", "")
+	cfg, err := config.Load()
+	if err != nil || !cfg.Demo {
+		t.Fatalf("demo: %v", err)
+	}
+	t.Setenv("GOOGLE_APPLICATION_CREDENTIALS", "/credentials/test.json")
+	if _, err := config.Load(); err == nil {
+		t.Fatal("demo accepted real credentials")
+	}
+}
